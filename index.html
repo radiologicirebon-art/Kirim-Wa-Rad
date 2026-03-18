@@ -1,171 +1,234 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Radiologi WA System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiologi WA System Premium</title>
 
-  <link rel="icon" href="data:,">
+<script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Tailwind PRODUCTION FIX -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- GSAP -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
-  <!-- Firebase (NO AUTH) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <style>
-    body {background: radial-gradient(circle at top,#1e3a8a,#020617);color:white}
-    .glass {background: rgba(255,255,255,0.08);backdrop-filter: blur(15px);border:1px solid rgba(255,255,255,0.1)}
-  </style>
+<style>
+body {
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    font-family: 'Segoe UI', sans-serif;
+}
+.glass {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+}
+.fade { animation: fadeIn 0.5s ease; }
+@keyframes fadeIn {
+    from {opacity:0; transform:translateY(15px);}
+    to {opacity:1;}
+}
+.btn {
+    transition: 0.3s;
+}
+.btn:hover {
+    transform: scale(1.05);
+}
+</style>
 </head>
-<body class="p-4">
 
-<h1 class="text-3xl font-bold mb-4">📡 VALIDASI WA PASIEN RADIOLOGI</h1>
+<body class="text-white p-6">
+
+<h1 class="text-3xl font-bold text-center mb-6 fade">
+📡 Radiologi WhatsApp System
+</h1>
 
 <!-- FORM -->
-<div class="glass p-6 rounded-2xl mb-6">
-  <h2 class="text-xl mb-3">IDENTITAS PASIEN</h2>
+<div class="glass p-6 max-w-xl mx-auto fade">
 
-  <input id="nama" placeholder="Nama Pasien" class="p-2 w-full mb-2 text-black rounded">
-  <input id="rm" placeholder="Nomor RM (6 digit)" class="p-2 w-full mb-2 text-black rounded">
-  <input id="wa" placeholder="Nomor WA (08xxxx)" class="p-2 w-full mb-2 text-black rounded">
-  <input id="pemilik" placeholder="Nama Pemilik" class="p-2 w-full mb-2 text-black rounded">
-  <input id="tanggal" type="date" class="p-2 w-full mb-3 text-black rounded">
+<h2 class="text-xl mb-4">Input Pasien</h2>
 
-  <button onclick="simpan()" class="bg-blue-600 w-full p-2 rounded">Simpan Data</button>
+<input id="nama" placeholder="Nama Pasien" class="input">
+<input id="rm" placeholder="No RM" class="input">
+<input id="wa" placeholder="08xxxxxxxxxx" class="input">
+<input id="pemilik" placeholder="Nama Pemilik" class="input">
+<input id="tgl" type="date" class="input">
+
+<button onclick="simpan()" class="btn bg-green-500 w-full p-2 rounded mt-3">
+Simpan Data
+</button>
+
 </div>
 
-<!-- LOGIN ADMIN -->
-<div id="loginBox" class="glass p-6 rounded-2xl mb-6">
-  <h2 class="text-xl mb-3">LOGIN ADMIN</h2>
-  <input id="user" placeholder="Username" class="p-2 w-full mb-2 text-black rounded">
-  <input id="pass" type="password" placeholder="Password" class="p-2 w-full mb-2 text-black rounded">
-  <button onclick="login()" class="bg-green-600 w-full p-2 rounded">Login</button>
+<!-- LOGIN -->
+<div class="text-center mt-6">
+<button onclick="login()" class="underline">LOGIN ADMIN</button>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
+<div id="dashboard" class="hidden mt-10 fade">
 
-<h2 class="text-xl mb-2">Belum Kirim WA</h2>
-<table class="w-full text-sm mb-6">
-<thead>
-<tr><th>No</th><th>Nama</th><th>WA</th><th>Pemilik</th><th>Tanggal</th><th>Aksi</th></tr>
-</thead>
-<tbody id="tbBelum"></tbody>
+<div class="grid grid-cols-3 gap-4 mb-6 text-center">
+
+<div class="glass p-4">
+<h3>Total</h3>
+<p id="total">0</p>
+</div>
+
+<div class="glass p-4">
+<h3>Belum</h3>
+<p id="belumCount">0</p>
+</div>
+
+<div class="glass p-4">
+<h3>Sudah</h3>
+<p id="sudahCount">0</p>
+</div>
+
+</div>
+
+<!-- BELUM -->
+<h2 class="text-xl mb-2">Belum Kirim</h2>
+<table class="w-full bg-white text-black rounded mb-6">
+<tbody id="belum"></tbody>
 </table>
 
-<h2 class="text-xl mb-2">Sudah Kirim WA</h2>
-<table class="w-full text-sm">
-<thead>
-<tr><th>No</th><th>Nama</th><th>WA</th><th>Pemilik</th><th>Tanggal</th><th>Tgl Kirim</th><th>User</th></tr>
-</thead>
-<tbody id="tbSudah"></tbody>
+<!-- SUDAH -->
+<h2 class="text-xl mb-2">Sudah Kirim</h2>
+<table class="w-full bg-white text-black rounded">
+<tbody id="sudah"></tbody>
 </table>
 
 </div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAJgQHOZrXsGfL6eil02qbS4dazhEBm5KM",
-  authDomain: "kirim-wa-pasien-rad.firebaseapp.com",
-  databaseURL: "https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
+databaseURL: "https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ADMIN USERS
-const users = {
-"201708073":"123",
-"202101209":"123",
-"202207105":"123",
-"202303119":"123",
-"202310276":"123",
-"202403156":"123",
-"202411359":"123",
-"202502147":"123",
-"202507169":"123",
-"202508171":"123",
-"202508172":"123"
+// ===== ADMIN LIST =====
+const adminList = {
+"201708073": {pass:"123", nama:"Ino Hadiwinata"},
+"202101209": {pass:"123", nama:"Ardi Pratama"},
+"202207105": {pass:"123", nama:"Zhafira"},
+"202303119": {pass:"123", nama:"Dwi Alfi"},
+"202310276": {pass:"123", nama:"Rita Riana"},
+"202403156": {pass:"123", nama:"Rizky"},
+"202411359": {pass:"123", nama:"Rafi"},
+"202502147": {pass:"123", nama:"Dias"},
+"202507169": {pass:"123", nama:"Taufik"},
+"202508171": {pass:"123", nama:"Arief"},
+"202508172": {pass:"123", nama:"Salsa"}
 };
 
-let currentUser="";
+let currentUser = "";
 
-function login(){
- if(users[user.value]===pass.value){
-  currentUser=user.value;
-  loginBox.style.display="none";
-  dashboard.classList.remove("hidden");
-  load();
- } else alert("Login gagal");
+// ===== INPUT STYLE =====
+document.querySelectorAll(".input").forEach(e=>{
+e.className="w-full p-2 mb-2 rounded text-black";
+});
+
+// ===== SIMPAN =====
+function simpan() {
+let data = {
+nama: nama.value,
+rm: rm.value,
+wa: wa.value,
+pemilik: pemilik.value,
+tgl: tgl.value,
+status: "belum",
+created: Date.now()
+};
+
+db.ref("pasien").push(data);
+alert("Data berhasil disimpan");
+location.reload();
 }
 
-function formatWA(n){
- if(n.startsWith("08")) return "62"+n.slice(1);
- return n;
+// ===== LOGIN =====
+function login() {
+let u = prompt("Username");
+let p = prompt("Password");
+
+if(adminList[u] && adminList[u].pass === p) {
+currentUser = adminList[u].nama;
+dashboard.classList.remove("hidden");
+load();
+} else {
+alert("Login gagal");
+}
 }
 
-function simpan(){
- db.ref("pasien").push({
-  nama:nama.value,
-  rm:rm.value,
-  wa:formatWA(wa.value),
-  pemilik:pemilik.value,
-  tanggal:tanggal.value,
-  status:"belum"
- });
- alert("Data tersimpan");
+// ===== LOAD DATA =====
+function load() {
+db.ref("pasien").on("value", snap=>{
+
+let total=0, belum=0, sudah=0;
+let htmlBelum="", htmlSudah="";
+
+snap.forEach(d=>{
+
+let data=d.val();
+total++;
+
+if(data.status=="belum"){
+belum++;
+
+htmlBelum+=`
+<tr>
+<td>${data.nama}</td>
+<td>${data.wa}</td>
+<td>
+<button onclick="kirim('${d.key}','${data.nama}','${data.wa}')"
+class="btn bg-green-500 text-white px-2 py-1 rounded">
+Kirim WA
+</button>
+</td>
+</tr>`;
+}
+else{
+sudah++;
+
+htmlSudah+=`
+<tr>
+<td>${data.nama}</td>
+<td>${data.wa}</td>
+<td>${data.tglKirim || "-"}</td>
+<td>${data.user || "-"}</td>
+</tr>`;
 }
 
-function load(){
- db.ref("pasien").on("value",snap=>{
-  tbBelum.innerHTML="";
-  tbSudah.innerHTML="";
+});
 
-  let no1=1,no2=1;
+document.getElementById("total").innerText=total;
+document.getElementById("belumCount").innerText=belum;
+document.getElementById("sudahCount").innerText=sudah;
 
-  snap.forEach(x=>{
-   let d=x.val();
+document.getElementById("belum").innerHTML=htmlBelum;
+document.getElementById("sudah").innerHTML=htmlSudah;
 
-   if(d.status==="belum"){
-    tbBelum.innerHTML+=`<tr>
-    <td>${no1++}</td>
-    <td>${d.nama}</td>
-    <td>${d.wa}</td>
-    <td>${d.pemilik}</td>
-    <td>${d.tanggal}</td>
-    <td><button onclick="kirim('${x.key}','${d.wa}','${d.nama}')" class="bg-green-500 px-2 rounded">Kirim WA</button></td>
-    </tr>`;
-   } else {
-    tbSudah.innerHTML+=`<tr>
-    <td>${no2++}</td>
-    <td>${d.nama}</td>
-    <td>${d.wa}</td>
-    <td>${d.pemilik}</td>
-    <td>${d.tanggal}</td>
-    <td>${d.tglKirim||""}</td>
-    <td>${d.user||""}</td>
-    </tr>`;
-   }
-  });
- });
+});
 }
 
-function kirim(id,wa,nama){
- const pesan = `Halo Sahabat MP, Berikut kami lampirkan hasil pemeriksaan ${nama}.\n\nDownload aplikasi MP Healthcare:\nhttps://play.google.com/store/apps/details?id=com.mphg.mp_healthcare&pcampaignid=web_share`;
+// ===== KIRIM WA =====
+function kirim(id,nama,wa){
 
- window.open(`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`);
+let pesan=`Halo Sahabat MP,
 
- db.ref("pasien/"+id).update({
-  status:"sudah",
-  tglKirim:new Date().toLocaleString(),
-  user:currentUser
- });
+Berikut hasil pemeriksaan radiologi atas nama ${nama}.
+
+Silakan download aplikasi:
+https://play.google.com/store/apps/details?id=com.mphg.mp_healthcare`;
+
+window.open(`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`);
+
+db.ref("pasien/"+id).update({
+status:"sudah",
+tglKirim:new Date().toLocaleString(),
+user: currentUser
+});
 }
 
 </script>
