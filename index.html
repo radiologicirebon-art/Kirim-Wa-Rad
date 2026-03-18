@@ -71,7 +71,6 @@ overflow:hidden;
 padding:8px;
 border-bottom:1px solid #eee;
 }
-
 </style>
 
 </head>
@@ -158,14 +157,21 @@ const adminList={
 
 let userLogin="";
 
-// ===== TTD =====
+// ===== TTD FIX =====
 let canvas=document.getElementById("ttd");
 let ctx=canvas.getContext("2d");
 let drawing=false;
+let isSigned=false; // ✅ FLAG
+
+// STYLE TINTA
+ctx.strokeStyle = "#1f2937";
+ctx.lineWidth = 2.5;
+ctx.lineCap = "round";
 
 // DESKTOP
 canvas.addEventListener("mousedown",(e)=>{
 drawing=true;
+isSigned=true;
 ctx.beginPath();
 ctx.moveTo(e.offsetX,e.offsetY);
 });
@@ -175,8 +181,6 @@ canvas.addEventListener("mouseleave",()=>drawing=false);
 
 canvas.addEventListener("mousemove",(e)=>{
 if(!drawing) return;
-ctx.lineWidth=2;
-ctx.lineCap="round";
 ctx.lineTo(e.offsetX,e.offsetY);
 ctx.stroke();
 });
@@ -185,6 +189,7 @@ ctx.stroke();
 canvas.addEventListener("touchstart",(e)=>{
 e.preventDefault();
 drawing=true;
+isSigned=true;
 let rect=canvas.getBoundingClientRect();
 let t=e.touches[0];
 ctx.beginPath();
@@ -192,6 +197,7 @@ ctx.moveTo(t.clientX-rect.left, t.clientY-rect.top);
 });
 
 canvas.addEventListener("touchend",()=>drawing=false);
+
 canvas.addEventListener("touchmove",(e)=>{
 e.preventDefault();
 if(!drawing) return;
@@ -204,12 +210,13 @@ ctx.stroke();
 // CLEAR
 function clearTTD(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
+isSigned=false;
 }
 
-// SIMPAN
+// SIMPAN FIX
 function simpan(){
 
-if(canvas.toDataURL().length < 5000){
+if(!isSigned){
 alert("Tanda tangan wajib diisi!");
 return;
 }
