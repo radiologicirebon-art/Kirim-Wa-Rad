@@ -10,31 +10,79 @@
 
 <style>
 body{
-background:linear-gradient(135deg,#0f2027,#2c5364);
+background:#f4f9fb;
 font-family:'Segoe UI';
 }
+
+/* CARD */
 .card{
-background:rgba(255,255,255,0.08);
-backdrop-filter:blur(15px);
-border-radius:20px;
+background:#fcfcfc;
+border-radius:18px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
+
+/* INPUT */
+.input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border-radius:10px;
+border:1px solid #dbeafe;
+background:#f8fafc;
+outline:none;
+}
+
+.input:focus{
+border-color:#4bb7db;
+box-shadow:0 0 0 2px rgba(75,183,219,0.2);
+}
+
+/* BUTTON */
+.btn{
+background:#4bb7db;
+color:#fff;
+padding:10px;
+border-radius:10px;
+font-weight:600;
+transition:0.2s;
+}
+
+.btn:hover{
+background:#36a6cb;
+}
+
+/* CANVAS */
 canvas{
 background:#fff;
+border:1px solid #e5e7eb;
 border-radius:10px;
 touch-action:none;
 }
+
+/* TABLE */
+.table{
+width:100%;
+background:#fff;
+border-radius:12px;
+overflow:hidden;
+}
+
+.table td{
+padding:8px;
+border-bottom:1px solid #eee;
+}
+
 </style>
 
 </head>
 
-<body class="text-white p-5">
+<body class="p-5 text-gray-700">
 
-<h1 class="text-2xl text-center font-bold mb-4">
+<h1 class="text-2xl text-center font-bold mb-6 text-[#4bb7db]">
 📡 Validasi WhatsApp Radiologi
 </h1>
 
-<!-- FORM -->
-<div class="card p-5 max-w-xl mx-auto">
+<div class="card p-6 max-w-xl mx-auto">
 
 <input id="nama" placeholder="Nama Pasien" class="input">
 <input id="rm" placeholder="No RM" class="input">
@@ -42,42 +90,46 @@ touch-action:none;
 <input id="pemilik" placeholder="Nama Pemilik" class="input">
 <input id="tgl" type="date" class="input">
 
-<p class="text-sm mt-2">
+<p class="text-sm text-gray-500 mt-2">
 Saya menyetujui pengiriman hasil radiologi via WhatsApp
 </p>
 
-<p class="mt-2 text-sm">Tanda Tangan:</p>
+<p class="mt-3 text-sm font-semibold text-gray-600">Tanda Tangan:</p>
 <canvas id="ttd" width="300" height="120"></canvas>
 
 <div class="flex gap-2 mt-2">
-<button onclick="clearTTD()" class="bg-red-500 px-3 py-1 rounded">Clear</button>
+<button onclick="clearTTD()" class="bg-red-500 text-white px-3 py-1 rounded">
+Clear
+</button>
 </div>
 
-<button onclick="simpan()" class="bg-green-500 w-full p-2 mt-3 rounded">
+<button onclick="simpan()" class="btn w-full mt-4">
 SIMPAN
 </button>
 
 </div>
 
 <div class="text-center mt-5">
-<button onclick="login()" class="underline">LOGIN ADMIN</button>
+<button onclick="login()" class="text-[#4bb7db] underline">
+LOGIN ADMIN
+</button>
 </div>
 
-<div id="admin" class="hidden mt-8">
+<div id="admin" class="hidden mt-8 max-w-4xl mx-auto">
 
-<div class="flex gap-2 mb-3">
-<input type="date" id="filterTgl" class="text-black p-1 rounded">
-<button onclick="filter()" class="bg-blue-500 px-2 rounded">Filter</button>
-<button onclick="exportExcel()" class="bg-green-600 px-2 rounded">Export Excel</button>
+<div class="flex gap-2 mb-4">
+<input type="date" id="filterTgl" class="input">
+<button onclick="filter()" class="btn px-3">Filter</button>
+<button onclick="exportExcel()" class="bg-green-500 text-white px-3 rounded">Export</button>
 </div>
 
-<h2 class="mb-2">Belum Kirim</h2>
-<table class="w-full bg-white text-black text-sm rounded mb-5">
+<h2 class="mb-2 font-semibold text-[#4bb7db]">Belum Kirim</h2>
+<table class="table mb-5">
 <tbody id="belum"></tbody>
 </table>
 
-<h2 class="mb-2">Sudah Kirim</h2>
-<table class="w-full bg-white text-black text-sm rounded">
+<h2 class="mb-2 font-semibold text-[#4bb7db]">Sudah Kirim</h2>
+<table class="table">
 <tbody id="sudah"></tbody>
 </table>
 
@@ -106,56 +158,47 @@ const adminList={
 
 let userLogin="";
 
-// INPUT STYLE
-document.querySelectorAll(".input").forEach(e=>{
-e.className="w-full p-2 mb-2 rounded text-black";
-});
-
-// ===== TTD FIX =====
+// ===== TTD =====
 let canvas=document.getElementById("ttd");
 let ctx=canvas.getContext("2d");
 let drawing=false;
 
 // DESKTOP
 canvas.addEventListener("mousedown",(e)=>{
-    drawing=true;
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX,e.offsetY);
+drawing=true;
+ctx.beginPath();
+ctx.moveTo(e.offsetX,e.offsetY);
 });
 
 canvas.addEventListener("mouseup",()=>drawing=false);
 canvas.addEventListener("mouseleave",()=>drawing=false);
 
 canvas.addEventListener("mousemove",(e)=>{
-    if(!drawing) return;
-    ctx.lineWidth=2;
-    ctx.lineCap="round";
-    ctx.lineTo(e.offsetX,e.offsetY);
-    ctx.stroke();
+if(!drawing) return;
+ctx.lineWidth=2;
+ctx.lineCap="round";
+ctx.lineTo(e.offsetX,e.offsetY);
+ctx.stroke();
 });
 
 // MOBILE
 canvas.addEventListener("touchstart",(e)=>{
-    e.preventDefault();
-    drawing=true;
-    let rect=canvas.getBoundingClientRect();
-    let t=e.touches[0];
-    ctx.beginPath();
-    ctx.moveTo(t.clientX-rect.left, t.clientY-rect.top);
+e.preventDefault();
+drawing=true;
+let rect=canvas.getBoundingClientRect();
+let t=e.touches[0];
+ctx.beginPath();
+ctx.moveTo(t.clientX-rect.left, t.clientY-rect.top);
 });
 
 canvas.addEventListener("touchend",()=>drawing=false);
-canvas.addEventListener("touchcancel",()=>drawing=false);
-
 canvas.addEventListener("touchmove",(e)=>{
-    e.preventDefault();
-    if(!drawing) return;
-    let rect=canvas.getBoundingClientRect();
-    let t=e.touches[0];
-    ctx.lineWidth=2;
-    ctx.lineCap="round";
-    ctx.lineTo(t.clientX-rect.left, t.clientY-rect.top);
-    ctx.stroke();
+e.preventDefault();
+if(!drawing) return;
+let rect=canvas.getBoundingClientRect();
+let t=e.touches[0];
+ctx.lineTo(t.clientX-rect.left, t.clientY-rect.top);
+ctx.stroke();
 });
 
 // CLEAR
@@ -163,10 +206,9 @@ function clearTTD(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-// ===== SIMPAN =====
+// SIMPAN
 function simpan(){
 
-// VALIDASI TTD
 if(canvas.toDataURL().length < 5000){
 alert("Tanda tangan wajib diisi!");
 return;
@@ -217,10 +259,7 @@ belumHTML+=`
 <td>${no1++}</td>
 <td>${x.nama}</td>
 <td>${x.wa}</td>
-<td>
-<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')"
-class="bg-green-500 text-white px-2 rounded">WA</button>
-</td>
+<td><button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-2">WA</button></td>
 </tr>`;
 }else{
 sudahHTML+=`
@@ -231,10 +270,7 @@ sudahHTML+=`
 <td>${x.tgl}</td>
 <td>${x.tglKirim}</td>
 <td>${x.user}</td>
-<td>
-<button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')"
-class="bg-blue-500 text-white px-2 rounded">Print</button>
-</td>
+<td><button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')" class="bg-gray-600 text-white px-2 rounded">Print</button></td>
 </tr>`;
 }
 });
