@@ -21,6 +21,7 @@ border-radius:20px;
 canvas{
 background:#fff;
 border-radius:10px;
+touch-action:none;
 }
 </style>
 
@@ -45,7 +46,6 @@ border-radius:10px;
 Saya menyetujui pengiriman hasil radiologi via WhatsApp
 </p>
 
-<!-- TANDA TANGAN -->
 <p class="mt-2 text-sm">Tanda Tangan:</p>
 <canvas id="ttd" width="300" height="120"></canvas>
 
@@ -59,15 +59,12 @@ SIMPAN
 
 </div>
 
-<!-- LOGIN -->
 <div class="text-center mt-5">
 <button onclick="login()" class="underline">LOGIN ADMIN</button>
 </div>
 
-<!-- ADMIN -->
 <div id="admin" class="hidden mt-8">
 
-<!-- FILTER -->
 <div class="flex gap-2 mb-3">
 <input type="date" id="filterTgl" class="text-black p-1 rounded">
 <button onclick="filter()" class="bg-blue-500 px-2 rounded">Filter</button>
@@ -86,12 +83,12 @@ SIMPAN
 
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
 
+// FIREBASE
 const firebaseConfig={
 databaseURL:"https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
@@ -114,20 +111,54 @@ document.querySelectorAll(".input").forEach(e=>{
 e.className="w-full p-2 mb-2 rounded text-black";
 });
 
-// ===== TTD =====
+// ===== TTD FIX =====
 let canvas=document.getElementById("ttd");
 let ctx=canvas.getContext("2d");
 let drawing=false;
 
-canvas.onmousedown=()=>drawing=true;
-canvas.onmouseup=()=>drawing=false;
-canvas.onmousemove=(e)=>{
-if(!drawing) return;
-ctx.lineWidth=2;
-ctx.lineTo(e.offsetX,e.offsetY);
-ctx.stroke();
-};
+// DESKTOP
+canvas.addEventListener("mousedown",(e)=>{
+    drawing=true;
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX,e.offsetY);
+});
 
+canvas.addEventListener("mouseup",()=>drawing=false);
+canvas.addEventListener("mouseleave",()=>drawing=false);
+
+canvas.addEventListener("mousemove",(e)=>{
+    if(!drawing) return;
+    ctx.lineWidth=2;
+    ctx.lineCap="round";
+    ctx.lineTo(e.offsetX,e.offsetY);
+    ctx.stroke();
+});
+
+// MOBILE
+canvas.addEventListener("touchstart",(e)=>{
+    e.preventDefault();
+    drawing=true;
+    let rect=canvas.getBoundingClientRect();
+    let t=e.touches[0];
+    ctx.beginPath();
+    ctx.moveTo(t.clientX-rect.left, t.clientY-rect.top);
+});
+
+canvas.addEventListener("touchend",()=>drawing=false);
+canvas.addEventListener("touchcancel",()=>drawing=false);
+
+canvas.addEventListener("touchmove",(e)=>{
+    e.preventDefault();
+    if(!drawing) return;
+    let rect=canvas.getBoundingClientRect();
+    let t=e.touches[0];
+    ctx.lineWidth=2;
+    ctx.lineCap="round";
+    ctx.lineTo(t.clientX-rect.left, t.clientY-rect.top);
+    ctx.stroke();
+});
+
+// CLEAR
 function clearTTD(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 }
@@ -135,7 +166,11 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 // ===== SIMPAN =====
 function simpan(){
 
-let ttd=canvas.toDataURL();
+// VALIDASI TTD
+if(canvas.toDataURL().length < 5000){
+alert("Tanda tangan wajib diisi!");
+return;
+}
 
 let data={
 nama:nama.value,
@@ -143,7 +178,7 @@ rm:rm.value,
 wa:formatWA(wa.value),
 pemilik:pemilik.value,
 tgl:tgl.value,
-ttd:ttd,
+ttd:canvas.toDataURL(),
 status:"belum"
 };
 
@@ -153,27 +188,24 @@ alert("Tersimpan");
 location.reload();
 }
 
-// ===== LOGIN =====
+// LOGIN
 function login(){
 let u=prompt("User ID");
 let p=prompt("Password");
 
 if(adminList[u] && adminList[u].p==p){
 userLogin=adminList[u].n;
-document.getElementById("admin").classList.remove("hidden");
+admin.classList.remove("hidden");
 load();
 }else{
 alert("Gagal");
 }
 }
 
-// ===== LOAD =====
+// LOAD
 function load(){
-
 db.ref("pasien").on("value",snap=>{
-
-let belumHTML="";
-let sudahHTML="";
+let belumHTML="", sudahHTML="";
 let no1=1,no2=1;
 
 snap.forEach(d=>{
@@ -187,9 +219,7 @@ belumHTML+=`
 <td>${x.wa}</td>
 <td>
 <button onclick="kirim('${d.key}','${x.nama}','${x.wa}')"
-class="bg-green-500 text-white px-2 rounded">
-WA
-</button>
+class="bg-green-500 text-white px-2 rounded">WA</button>
 </td>
 </tr>`;
 }else{
@@ -203,9 +233,7 @@ sudahHTML+=`
 <td>${x.user}</td>
 <td>
 <button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')"
-class="bg-blue-500 text-white px-2 rounded">
-Print
-</button>
+class="bg-blue-500 text-white px-2 rounded">Print</button>
 </td>
 </tr>`;
 }
@@ -217,12 +245,11 @@ sudah.innerHTML=sudahHTML;
 });
 }
 
-// ===== KIRIM WA =====
+// KIRIM WA
 function kirim(id,nama,wa){
-
 let pesan=`Halo Sahabat MP,
 
-Berikut kami lampirkan hasil pemeriksaan ${nama} di Instalasi Radiologi.
+Berikut hasil pemeriksaan ${nama} di Instalasi Radiologi.
 
 Download aplikasi:
 https://play.google.com/store/apps/details?id=com.mphg.mp_healthcare`;
@@ -236,37 +263,35 @@ user:userLogin
 });
 }
 
-// ===== FORMAT WA =====
+// FORMAT WA
 function formatWA(n){
 if(n.startsWith("08")) return "62"+n.substring(1);
 return n;
 }
 
-// ===== FILTER =====
+// FILTER
 function filter(){
 let t=filterTgl.value;
 
 db.ref("pasien").once("value",snap=>{
-let sudahHTML="";
+let html="";
 snap.forEach(d=>{
 let x=d.val();
 if(x.tgl==t && x.status=="sudah"){
-sudahHTML+=`
-<tr>
+html+=`<tr>
 <td>${x.nama}</td>
 <td>${x.wa}</td>
 <td>${x.tglKirim}</td>
 </tr>`;
 }
 });
-sudah.innerHTML=sudahHTML;
+sudah.innerHTML=html;
 });
 }
 
-// ===== EXPORT EXCEL =====
+// EXPORT
 function exportExcel(){
 db.ref("pasien").once("value",snap=>{
-
 let data="Nama\tWA\tTanggal\n";
 
 snap.forEach(d=>{
@@ -276,16 +301,15 @@ data+=`${x.nama}\t${x.wa}\t${x.tglKirim}\n`;
 }
 });
 
-let blob=new Blob([data],{type:"text/plain"});
+let blob=new Blob([data]);
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
 a.download="laporan.xls";
 a.click();
-
 });
 }
 
-// ===== PRINT =====
+// PRINT
 function printData(nama,wa,tgl){
 let w=window.open();
 w.document.write(`
