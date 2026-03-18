@@ -7,16 +7,15 @@
 
   <link rel="icon" href="data:,">
 
-  <!-- Tailwind -->
+  <!-- Tailwind PRODUCTION FIX -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
-  <!-- Firebase STABLE -->
+  <!-- Firebase (NO AUTH) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     body {background: radial-gradient(circle at top,#1e3a8a,#020617);color:white}
@@ -27,7 +26,7 @@
 
 <h1 class="text-3xl font-bold mb-4">📡 VALIDASI WA PASIEN RADIOLOGI</h1>
 
-<!-- FORM PASIEN -->
+<!-- FORM -->
 <div class="glass p-6 rounded-2xl mb-6">
   <h2 class="text-xl mb-3">IDENTITAS PASIEN</h2>
 
@@ -36,10 +35,6 @@
   <input id="wa" placeholder="Nomor WA (08xxxx)" class="p-2 w-full mb-2 text-black rounded">
   <input id="pemilik" placeholder="Nama Pemilik" class="p-2 w-full mb-2 text-black rounded">
   <input id="tanggal" type="date" class="p-2 w-full mb-3 text-black rounded">
-
-  <div class="text-sm mb-3">
-    <p>Dengan ini menyatakan nomor WhatsApp aktif dan bersedia menerima hasil radiologi via WhatsApp.</p>
-  </div>
 
   <button onclick="simpan()" class="bg-blue-600 w-full p-2 rounded">Simpan Data</button>
 </div>
@@ -84,10 +79,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// AUTH WAJIB
-firebase.auth().signInAnonymously();
-
-// USER ADMIN
+// ADMIN USERS
 const users = {
 "201708073":"123",
 "202101209":"123",
@@ -110,7 +102,6 @@ function login(){
   loginBox.style.display="none";
   dashboard.classList.remove("hidden");
   load();
-  gsap.from("#dashboard",{opacity:0,y:30,duration:1});
  } else alert("Login gagal");
 }
 
