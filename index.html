@@ -3,44 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radiologi WA System Premium</title>
+
+<title>Radiologi WA Premium</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-body {
-    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-    font-family: 'Segoe UI', sans-serif;
+body{
+background:linear-gradient(135deg,#0f2027,#2c5364);
+font-family:'Segoe UI';
 }
-.glass {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(15px);
-    border-radius: 20px;
+.card{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(15px);
+border-radius:20px;
 }
-.fade { animation: fadeIn 0.5s ease; }
-@keyframes fadeIn {
-    from {opacity:0; transform:translateY(15px);}
-    to {opacity:1;}
-}
-.btn {
-    transition: 0.3s;
-}
-.btn:hover {
-    transform: scale(1.05);
+canvas{
+background:#fff;
+border-radius:10px;
 }
 </style>
+
 </head>
 
-<body class="text-white p-6">
+<body class="text-white p-5">
 
-<h1 class="text-3xl font-bold text-center mb-6 fade">
-📡 Radiologi WhatsApp System
+<h1 class="text-2xl text-center font-bold mb-4">
+📡 Validasi WhatsApp Radiologi
 </h1>
 
 <!-- FORM -->
-<div class="glass p-6 max-w-xl mx-auto fade">
-
-<h2 class="text-xl mb-4">Input Pasien</h2>
+<div class="card p-5 max-w-xl mx-auto">
 
 <input id="nama" placeholder="Nama Pasien" class="input">
 <input id="rm" placeholder="No RM" class="input">
@@ -48,48 +41,46 @@ body {
 <input id="pemilik" placeholder="Nama Pemilik" class="input">
 <input id="tgl" type="date" class="input">
 
-<button onclick="simpan()" class="btn bg-green-500 w-full p-2 rounded mt-3">
-Simpan Data
+<p class="text-sm mt-2">
+Saya menyetujui pengiriman hasil radiologi via WhatsApp
+</p>
+
+<!-- TANDA TANGAN -->
+<p class="mt-2 text-sm">Tanda Tangan:</p>
+<canvas id="ttd" width="300" height="120"></canvas>
+
+<div class="flex gap-2 mt-2">
+<button onclick="clearTTD()" class="bg-red-500 px-3 py-1 rounded">Clear</button>
+</div>
+
+<button onclick="simpan()" class="bg-green-500 w-full p-2 mt-3 rounded">
+SIMPAN
 </button>
 
 </div>
 
 <!-- LOGIN -->
-<div class="text-center mt-6">
+<div class="text-center mt-5">
 <button onclick="login()" class="underline">LOGIN ADMIN</button>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden mt-10 fade">
+<!-- ADMIN -->
+<div id="admin" class="hidden mt-8">
 
-<div class="grid grid-cols-3 gap-4 mb-6 text-center">
-
-<div class="glass p-4">
-<h3>Total</h3>
-<p id="total">0</p>
+<!-- FILTER -->
+<div class="flex gap-2 mb-3">
+<input type="date" id="filterTgl" class="text-black p-1 rounded">
+<button onclick="filter()" class="bg-blue-500 px-2 rounded">Filter</button>
+<button onclick="exportExcel()" class="bg-green-600 px-2 rounded">Export Excel</button>
 </div>
 
-<div class="glass p-4">
-<h3>Belum</h3>
-<p id="belumCount">0</p>
-</div>
-
-<div class="glass p-4">
-<h3>Sudah</h3>
-<p id="sudahCount">0</p>
-</div>
-
-</div>
-
-<!-- BELUM -->
-<h2 class="text-xl mb-2">Belum Kirim</h2>
-<table class="w-full bg-white text-black rounded mb-6">
+<h2 class="mb-2">Belum Kirim</h2>
+<table class="w-full bg-white text-black text-sm rounded mb-5">
 <tbody id="belum"></tbody>
 </table>
 
-<!-- SUDAH -->
-<h2 class="text-xl mb-2">Sudah Kirim</h2>
-<table class="w-full bg-white text-black rounded">
+<h2 class="mb-2">Sudah Kirim</h2>
+<table class="w-full bg-white text-black text-sm rounded">
 <tbody id="sudah"></tbody>
 </table>
 
@@ -101,113 +92,127 @@ Simpan Data
 
 <script>
 
-const firebaseConfig = {
-databaseURL: "https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
+const firebaseConfig={
+databaseURL:"https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-// ===== ADMIN LIST =====
-const adminList = {
-"201708073": {pass:"123", nama:"Ino Hadiwinata"},
-"202101209": {pass:"123", nama:"Ardi Pratama"},
-"202207105": {pass:"123", nama:"Zhafira"},
-"202303119": {pass:"123", nama:"Dwi Alfi"},
-"202310276": {pass:"123", nama:"Rita Riana"},
-"202403156": {pass:"123", nama:"Rizky"},
-"202411359": {pass:"123", nama:"Rafi"},
-"202502147": {pass:"123", nama:"Dias"},
-"202507169": {pass:"123", nama:"Taufik"},
-"202508171": {pass:"123", nama:"Arief"},
-"202508172": {pass:"123", nama:"Salsa"}
+// ADMIN
+const adminList={
+"201708073":{p:"123",n:"Ino"},
+"202101209":{p:"123",n:"Ardi"},
+"202207105":{p:"123",n:"Zhafira"},
+"202303119":{p:"123",n:"Dwi"}
 };
 
-let currentUser = "";
+let userLogin="";
 
-// ===== INPUT STYLE =====
+// INPUT STYLE
 document.querySelectorAll(".input").forEach(e=>{
 e.className="w-full p-2 mb-2 rounded text-black";
 });
 
+// ===== TTD =====
+let canvas=document.getElementById("ttd");
+let ctx=canvas.getContext("2d");
+let drawing=false;
+
+canvas.onmousedown=()=>drawing=true;
+canvas.onmouseup=()=>drawing=false;
+canvas.onmousemove=(e)=>{
+if(!drawing) return;
+ctx.lineWidth=2;
+ctx.lineTo(e.offsetX,e.offsetY);
+ctx.stroke();
+};
+
+function clearTTD(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
 // ===== SIMPAN =====
-function simpan() {
-let data = {
-nama: nama.value,
-rm: rm.value,
-wa: wa.value,
-pemilik: pemilik.value,
-tgl: tgl.value,
-status: "belum",
-created: Date.now()
+function simpan(){
+
+let ttd=canvas.toDataURL();
+
+let data={
+nama:nama.value,
+rm:rm.value,
+wa:formatWA(wa.value),
+pemilik:pemilik.value,
+tgl:tgl.value,
+ttd:ttd,
+status:"belum"
 };
 
 db.ref("pasien").push(data);
-alert("Data berhasil disimpan");
+
+alert("Tersimpan");
 location.reload();
 }
 
 // ===== LOGIN =====
-function login() {
-let u = prompt("Username");
-let p = prompt("Password");
+function login(){
+let u=prompt("User ID");
+let p=prompt("Password");
 
-if(adminList[u] && adminList[u].pass === p) {
-currentUser = adminList[u].nama;
-dashboard.classList.remove("hidden");
+if(adminList[u] && adminList[u].p==p){
+userLogin=adminList[u].n;
+document.getElementById("admin").classList.remove("hidden");
 load();
-} else {
-alert("Login gagal");
+}else{
+alert("Gagal");
 }
 }
 
-// ===== LOAD DATA =====
-function load() {
-db.ref("pasien").on("value", snap=>{
+// ===== LOAD =====
+function load(){
 
-let total=0, belum=0, sudah=0;
-let htmlBelum="", htmlSudah="";
+db.ref("pasien").on("value",snap=>{
+
+let belumHTML="";
+let sudahHTML="";
+let no1=1,no2=1;
 
 snap.forEach(d=>{
+let x=d.val();
 
-let data=d.val();
-total++;
-
-if(data.status=="belum"){
-belum++;
-
-htmlBelum+=`
+if(x.status=="belum"){
+belumHTML+=`
 <tr>
-<td>${data.nama}</td>
-<td>${data.wa}</td>
+<td>${no1++}</td>
+<td>${x.nama}</td>
+<td>${x.wa}</td>
 <td>
-<button onclick="kirim('${d.key}','${data.nama}','${data.wa}')"
-class="btn bg-green-500 text-white px-2 py-1 rounded">
-Kirim WA
+<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')"
+class="bg-green-500 text-white px-2 rounded">
+WA
+</button>
+</td>
+</tr>`;
+}else{
+sudahHTML+=`
+<tr>
+<td>${no2++}</td>
+<td>${x.nama}</td>
+<td>${x.wa}</td>
+<td>${x.tgl}</td>
+<td>${x.tglKirim}</td>
+<td>${x.user}</td>
+<td>
+<button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')"
+class="bg-blue-500 text-white px-2 rounded">
+Print
 </button>
 </td>
 </tr>`;
 }
-else{
-sudah++;
-
-htmlSudah+=`
-<tr>
-<td>${data.nama}</td>
-<td>${data.wa}</td>
-<td>${data.tglKirim || "-"}</td>
-<td>${data.user || "-"}</td>
-</tr>`;
-}
-
 });
 
-document.getElementById("total").innerText=total;
-document.getElementById("belumCount").innerText=belum;
-document.getElementById("sudahCount").innerText=sudah;
-
-document.getElementById("belum").innerHTML=htmlBelum;
-document.getElementById("sudah").innerHTML=htmlSudah;
+belum.innerHTML=belumHTML;
+sudah.innerHTML=sudahHTML;
 
 });
 }
@@ -217,9 +222,9 @@ function kirim(id,nama,wa){
 
 let pesan=`Halo Sahabat MP,
 
-Berikut hasil pemeriksaan radiologi atas nama ${nama}.
+Berikut kami lampirkan hasil pemeriksaan ${nama} di Instalasi Radiologi.
 
-Silakan download aplikasi:
+Download aplikasi:
 https://play.google.com/store/apps/details?id=com.mphg.mp_healthcare`;
 
 window.open(`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`);
@@ -227,8 +232,69 @@ window.open(`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`);
 db.ref("pasien/"+id).update({
 status:"sudah",
 tglKirim:new Date().toLocaleString(),
-user: currentUser
+user:userLogin
 });
+}
+
+// ===== FORMAT WA =====
+function formatWA(n){
+if(n.startsWith("08")) return "62"+n.substring(1);
+return n;
+}
+
+// ===== FILTER =====
+function filter(){
+let t=filterTgl.value;
+
+db.ref("pasien").once("value",snap=>{
+let sudahHTML="";
+snap.forEach(d=>{
+let x=d.val();
+if(x.tgl==t && x.status=="sudah"){
+sudahHTML+=`
+<tr>
+<td>${x.nama}</td>
+<td>${x.wa}</td>
+<td>${x.tglKirim}</td>
+</tr>`;
+}
+});
+sudah.innerHTML=sudahHTML;
+});
+}
+
+// ===== EXPORT EXCEL =====
+function exportExcel(){
+db.ref("pasien").once("value",snap=>{
+
+let data="Nama\tWA\tTanggal\n";
+
+snap.forEach(d=>{
+let x=d.val();
+if(x.status=="sudah"){
+data+=`${x.nama}\t${x.wa}\t${x.tglKirim}\n`;
+}
+});
+
+let blob=new Blob([data],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="laporan.xls";
+a.click();
+
+});
+}
+
+// ===== PRINT =====
+function printData(nama,wa,tgl){
+let w=window.open();
+w.document.write(`
+<h2>Bukti Kirim WA</h2>
+<p>Nama: ${nama}</p>
+<p>WA: ${wa}</p>
+<p>Tanggal: ${tgl}</p>
+`);
+w.print();
 }
 
 </script>
