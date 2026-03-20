@@ -10,77 +10,107 @@
 
 <style>
 body{
-background:#f4f9fb;
-font-family:'Segoe UI';
+background: linear-gradient(135deg,#f4f9fb,#eaf6fb);
+font-family:'Segoe UI',sans-serif;
 }
 
 /* CARD */
 .card{
-background:#fcfcfc;
-border-radius:18px;
-box-shadow:0 10px 25px rgba(0,0,0,0.08);
+background:#ffffff;
+border-radius:20px;
+box-shadow:0 15px 40px rgba(0,0,0,0.08);
 }
 
 /* INPUT */
 .input{
 width:100%;
-padding:10px;
-margin-bottom:10px;
-border-radius:10px;
-border:1px solid #dbeafe;
-background:#f8fafc;
-outline:none;
+padding:12px 14px;
+margin-bottom:12px;
+border-radius:12px;
+border:1px solid #e5e7eb;
+background:#f9fafb;
+transition:0.2s;
 }
 
 .input:focus{
 border-color:#4bb7db;
-box-shadow:0 0 0 2px rgba(75,183,219,0.2);
+box-shadow:0 0 0 3px rgba(75,183,219,0.15);
+background:#fff;
 }
 
 /* BUTTON */
 .btn{
-background:#4bb7db;
+background:linear-gradient(135deg,#4bb7db,#36a6cb);
 color:#fff;
-padding:10px;
-border-radius:10px;
+padding:12px;
+border-radius:12px;
 font-weight:600;
-transition:0.2s;
+transition:0.3s;
+box-shadow:0 6px 15px rgba(75,183,219,0.3);
 }
 
 .btn:hover{
-background:#36a6cb;
+transform:translateY(-1px);
+box-shadow:0 10px 20px rgba(75,183,219,0.4);
 }
 
 /* CANVAS */
 canvas{
 background:#fff;
-border:1px solid #e5e7eb;
-border-radius:10px;
-touch-action:none;
+border:2px dashed #d1d5db;
+border-radius:12px;
 }
 
 /* TABLE */
 .table{
 width:100%;
-background:#fff;
-border-radius:12px;
+border-collapse:collapse;
 overflow:hidden;
+border-radius:14px;
+}
+
+.table th{
+background:#4bb7db;
+color:#fff;
+padding:10px;
+font-size:14px;
+text-align:left;
 }
 
 .table td{
-padding:8px;
+padding:10px;
 border-bottom:1px solid #eee;
+font-size:14px;
+}
+
+.badge{
+padding:4px 10px;
+border-radius:999px;
+font-size:12px;
+}
+
+.badge-belum{
+background:#fee2e2;
+color:#b91c1c;
+}
+
+.badge-sudah{
+background:#dcfce7;
+color:#166534;
 }
 </style>
 
 </head>
 
-<body class="p-5 text-gray-700">
+<body class="p-6 text-gray-700">
 
-<h1 class="text-2xl text-center font-bold mb-6 text-[#4bb7db]">
-📡 Validasi WhatsApp Radiologi
-</h1>
+<!-- HEADER -->
+<div class="text-center mb-8">
+<h1 class="text-3xl font-bold text-[#4bb7db]">📡 Validasi WhatsApp Radiologi</h1>
+<p class="text-sm text-gray-500 mt-1">Instalasi Radiologi - Sistem Pengiriman Hasil</p>
+</div>
 
+<!-- FORM -->
 <div class="card p-6 max-w-xl mx-auto">
 
 <input id="nama" placeholder="Nama Pasien" class="input">
@@ -94,41 +124,64 @@ Saya menyetujui pengiriman hasil radiologi via WhatsApp
 </p>
 
 <p class="mt-3 text-sm font-semibold text-gray-600">Tanda Tangan:</p>
-<canvas id="ttd" width="300" height="120"></canvas>
+<canvas id="ttd" width="350" height="130"></canvas>
 
 <div class="flex gap-2 mt-2">
-<button onclick="clearTTD()" class="bg-red-500 text-white px-3 py-1 rounded">
+<button onclick="clearTTD()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">
 Clear
 </button>
 </div>
 
 <button onclick="simpan()" class="btn w-full mt-4">
-SIMPAN
+💾 SIMPAN DATA
 </button>
 
 </div>
 
-<div class="text-center mt-5">
-<button onclick="login()" class="text-[#4bb7db] underline">
-LOGIN ADMIN
+<!-- LOGIN -->
+<div class="text-center mt-6">
+<button onclick="login()" class="text-[#4bb7db] font-semibold hover:underline">
+🔐 LOGIN ADMIN
 </button>
 </div>
 
-<div id="admin" class="hidden mt-8 max-w-4xl mx-auto">
+<!-- ADMIN -->
+<div id="admin" class="hidden mt-10 max-w-5xl mx-auto">
 
-<div class="flex gap-2 mb-4">
-<input type="date" id="filterTgl" class="input">
-<button onclick="filter()" class="btn px-3">Filter</button>
-<button onclick="exportExcel()" class="bg-green-500 text-white px-3 rounded">Export</button>
+<div class="flex flex-wrap gap-2 mb-5">
+<input type="date" id="filterTgl" class="input max-w-xs">
+<button onclick="filter()" class="btn px-4">Filter</button>
+<button onclick="exportExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 rounded-lg">
+Export Excel
+</button>
 </div>
 
 <h2 class="mb-2 font-semibold text-[#4bb7db]">Belum Kirim</h2>
-<table class="table mb-5">
+<table class="table mb-6">
+<thead>
+<tr>
+<th>No</th>
+<th>Nama</th>
+<th>WA</th>
+<th>Aksi</th>
+</tr>
+</thead>
 <tbody id="belum"></tbody>
 </table>
 
 <h2 class="mb-2 font-semibold text-[#4bb7db]">Sudah Kirim</h2>
 <table class="table">
+<thead>
+<tr>
+<th>No</th>
+<th>Nama</th>
+<th>WA</th>
+<th>Tgl Periksa</th>
+<th>Tgl Kirim</th>
+<th>Petugas</th>
+<th>Aksi</th>
+</tr>
+</thead>
 <tbody id="sudah"></tbody>
 </table>
 
@@ -138,12 +191,10 @@ LOGIN ADMIN
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-
 // FIREBASE
 const firebaseConfig={
 databaseURL:"https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
@@ -157,53 +208,25 @@ const adminList={
 
 let userLogin="";
 
-// ===== TTD FIX =====
+// CANVAS
 let canvas=document.getElementById("ttd");
 let ctx=canvas.getContext("2d");
 let drawing=false;
-let isSigned=false; // ✅ FLAG
+let isSigned=false;
 
-// STYLE TINTA
-ctx.strokeStyle = "#1f2937";
-ctx.lineWidth = 2.5;
-ctx.lineCap = "round";
+ctx.strokeStyle="#1f2937";
+ctx.lineWidth=2.5;
+ctx.lineCap="round";
 
-// DESKTOP
 canvas.addEventListener("mousedown",(e)=>{
-drawing=true;
-isSigned=true;
+drawing=true; isSigned=true;
 ctx.beginPath();
 ctx.moveTo(e.offsetX,e.offsetY);
 });
-
 canvas.addEventListener("mouseup",()=>drawing=false);
-canvas.addEventListener("mouseleave",()=>drawing=false);
-
 canvas.addEventListener("mousemove",(e)=>{
 if(!drawing) return;
 ctx.lineTo(e.offsetX,e.offsetY);
-ctx.stroke();
-});
-
-// MOBILE
-canvas.addEventListener("touchstart",(e)=>{
-e.preventDefault();
-drawing=true;
-isSigned=true;
-let rect=canvas.getBoundingClientRect();
-let t=e.touches[0];
-ctx.beginPath();
-ctx.moveTo(t.clientX-rect.left, t.clientY-rect.top);
-});
-
-canvas.addEventListener("touchend",()=>drawing=false);
-
-canvas.addEventListener("touchmove",(e)=>{
-e.preventDefault();
-if(!drawing) return;
-let rect=canvas.getBoundingClientRect();
-let t=e.touches[0];
-ctx.lineTo(t.clientX-rect.left, t.clientY-rect.top);
 ctx.stroke();
 });
 
@@ -213,9 +236,8 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 isSigned=false;
 }
 
-// SIMPAN FIX
+// SIMPAN
 function simpan(){
-
 if(!isSigned){
 alert("Tanda tangan wajib diisi!");
 return;
@@ -232,8 +254,7 @@ status:"belum"
 };
 
 db.ref("pasien").push(data);
-
-alert("Tersimpan");
+alert("Data berhasil disimpan!");
 location.reload();
 }
 
@@ -247,7 +268,7 @@ userLogin=adminList[u].n;
 admin.classList.remove("hidden");
 load();
 }else{
-alert("Gagal");
+alert("Login gagal");
 }
 }
 
@@ -266,7 +287,11 @@ belumHTML+=`
 <td>${no1++}</td>
 <td>${x.nama}</td>
 <td>${x.wa}</td>
-<td><button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-2">WA</button></td>
+<td>
+<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-3 py-1 text-sm">
+Kirim
+</button>
+</td>
 </tr>`;
 }else{
 sudahHTML+=`
@@ -277,7 +302,11 @@ sudahHTML+=`
 <td>${x.tgl}</td>
 <td>${x.tglKirim}</td>
 <td>${x.user}</td>
-<td><button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')" class="bg-gray-600 text-white px-2 rounded">Print</button></td>
+<td>
+<button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')" class="bg-gray-600 text-white px-3 py-1 rounded-lg text-sm">
+Print
+</button>
+</td>
 </tr>`;
 }
 });
@@ -288,7 +317,7 @@ sudah.innerHTML=sudahHTML;
 });
 }
 
-// KIRIM WA
+// WA
 function kirim(id,nama,wa){
 let pesan=`Halo Sahabat MP,
 
@@ -363,7 +392,6 @@ w.document.write(`
 `);
 w.print();
 }
-
 </script>
 
 </body>
