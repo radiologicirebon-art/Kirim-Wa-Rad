@@ -3,183 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Radiologi WA Premium</title>
+<title>Radiologi WA</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 body{
-background: linear-gradient(135deg,#f4f9fb,#eaf6fb);
-font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#f4f9fb,#eaf6fb);
+font-family:'Segoe UI';
 }
 
-/* CARD */
 .card{
-background:#ffffff;
-border-radius:20px;
-box-shadow:0 15px 40px rgba(0,0,0,0.08);
+background:#fff;
+border-radius:18px;
+box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* INPUT */
 .input{
 width:100%;
-padding:12px 14px;
-margin-bottom:12px;
-border-radius:12px;
+padding:12px;
+margin-bottom:10px;
+border-radius:10px;
 border:1px solid #e5e7eb;
-background:#f9fafb;
-transition:0.2s;
 }
 
 .input:focus{
 border-color:#4bb7db;
-box-shadow:0 0 0 3px rgba(75,183,219,0.15);
-background:#fff;
+box-shadow:0 0 0 2px rgba(75,183,219,0.2);
 }
 
-/* BUTTON */
 .btn{
-background:linear-gradient(135deg,#4bb7db,#36a6cb);
+background:#4bb7db;
 color:#fff;
 padding:12px;
-border-radius:12px;
+border-radius:10px;
 font-weight:600;
-transition:0.3s;
-box-shadow:0 6px 15px rgba(75,183,219,0.3);
 }
 
 .btn:hover{
-transform:translateY(-1px);
-box-shadow:0 10px 20px rgba(75,183,219,0.4);
+background:#36a6cb;
 }
 
-/* CANVAS */
-canvas{
-background:#fff;
-border:2px dashed #d1d5db;
-border-radius:12px;
-}
-
-/* TABLE */
-.table{
+table{
 width:100%;
 border-collapse:collapse;
-overflow:hidden;
-border-radius:14px;
 }
 
-.table th{
+th{
 background:#4bb7db;
 color:#fff;
 padding:10px;
-font-size:14px;
-text-align:left;
 }
 
-.table td{
+td{
 padding:10px;
 border-bottom:1px solid #eee;
-font-size:14px;
-}
-
-.badge{
-padding:4px 10px;
-border-radius:999px;
-font-size:12px;
-}
-
-.badge-belum{
-background:#fee2e2;
-color:#b91c1c;
-}
-
-.badge-sudah{
-background:#dcfce7;
-color:#166534;
 }
 </style>
-
 </head>
 
-<body class="p-6 text-gray-700">
+<body class="p-6">
 
-<!-- HEADER -->
-<div class="text-center mb-8">
-<h1 class="text-3xl font-bold text-[#4bb7db]">📡 Validasi WhatsApp Radiologi</h1>
-<p class="text-sm text-gray-500 mt-1">Instalasi Radiologi - Sistem Pengiriman Hasil</p>
-</div>
+<h1 class="text-2xl font-bold text-center text-[#4bb7db] mb-6">
+📡 Validasi WA Radiologi
+</h1>
 
 <!-- FORM -->
-<div class="card p-6 max-w-xl mx-auto">
+<div class="card p-6 max-w-lg mx-auto">
 
 <input id="nama" placeholder="Nama Pasien" class="input">
 <input id="rm" placeholder="No RM" class="input">
-<input id="wa" placeholder="08xxxxxxxxxx" class="input">
-<input id="pemilik" placeholder="Nama Pemilik" class="input">
-<input id="tgl" type="date" class="input">
+<input id="wa" placeholder="Nomor WA (08xxx)" class="input">
 
-<p class="text-sm text-gray-500 mt-2">
-Saya menyetujui pengiriman hasil radiologi via WhatsApp
-</p>
+<p class="text-sm mt-2 mb-1">Tanda Tangan Persetujuan:</p>
+<canvas id="ttd" width="320" height="120" class="border rounded"></canvas>
 
-<p class="mt-3 text-sm font-semibold text-gray-600">Tanda Tangan:</p>
-<canvas id="ttd" width="350" height="130"></canvas>
-
-<div class="flex gap-2 mt-2">
-<button onclick="clearTTD()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">
+<button onclick="clearTTD()" class="text-red-500 text-sm mt-2">
 Clear
 </button>
-</div>
 
 <button onclick="simpan()" class="btn w-full mt-4">
-💾 SIMPAN DATA
+Simpan Permohonan
 </button>
 
 </div>
 
-<!-- LOGIN -->
-<div class="text-center mt-6">
-<button onclick="login()" class="text-[#4bb7db] font-semibold hover:underline">
-🔐 LOGIN ADMIN
-</button>
-</div>
+<!-- DATA -->
+<div class="mt-10 max-w-4xl mx-auto">
 
-<!-- ADMIN -->
-<div id="admin" class="hidden mt-10 max-w-5xl mx-auto">
-
-<div class="flex flex-wrap gap-2 mb-5">
-<input type="date" id="filterTgl" class="input max-w-xs">
-<button onclick="filter()" class="btn px-4">Filter</button>
-<button onclick="exportExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 rounded-lg">
-Export Excel
-</button>
-</div>
-
-<h2 class="mb-2 font-semibold text-[#4bb7db]">Belum Kirim</h2>
-<table class="table mb-6">
+<h2 class="font-semibold text-[#4bb7db] mb-2">Keranjang Belum Kirim</h2>
+<table class="mb-6">
 <thead>
 <tr>
 <th>No</th>
-<th>Nama</th>
-<th>WA</th>
-<th>Aksi</th>
+<th>Nama Pasien</th>
+<th>No RM</th>
+<th>Kirim WA</th>
 </tr>
 </thead>
 <tbody id="belum"></tbody>
 </table>
 
-<h2 class="mb-2 font-semibold text-[#4bb7db]">Sudah Kirim</h2>
-<table class="table">
+<h2 class="font-semibold text-[#4bb7db] mb-2">Keranjang Terkirim</h2>
+<table>
 <thead>
 <tr>
 <th>No</th>
-<th>Nama</th>
-<th>WA</th>
-<th>Tgl Periksa</th>
-<th>Tgl Kirim</th>
-<th>Petugas</th>
-<th>Aksi</th>
+<th>Nama Pasien</th>
+<th>No RM</th>
+<th>Tanggal Kirim</th>
 </tr>
 </thead>
 <tbody id="sudah"></tbody>
@@ -191,22 +123,12 @@ Export Excel
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
+
 // FIREBASE
-const firebaseConfig={
+firebase.initializeApp({
 databaseURL:"https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
+});
 const db=firebase.database();
-
-// ADMIN
-const adminList={
-"201708073":{p:"123",n:"Ino"},
-"202101209":{p:"123",n:"Ardi"},
-"202207105":{p:"123",n:"Zhafira"},
-"202303119":{p:"123",n:"Dwi"}
-};
-
-let userLogin="";
 
 // CANVAS
 let canvas=document.getElementById("ttd");
@@ -214,8 +136,7 @@ let ctx=canvas.getContext("2d");
 let drawing=false;
 let isSigned=false;
 
-ctx.strokeStyle="#1f2937";
-ctx.lineWidth=2.5;
+ctx.lineWidth=2;
 ctx.lineCap="round";
 
 canvas.addEventListener("mousedown",(e)=>{
@@ -223,7 +144,9 @@ drawing=true; isSigned=true;
 ctx.beginPath();
 ctx.moveTo(e.offsetX,e.offsetY);
 });
+
 canvas.addEventListener("mouseup",()=>drawing=false);
+
 canvas.addEventListener("mousemove",(e)=>{
 if(!drawing) return;
 ctx.lineTo(e.offsetX,e.offsetY);
@@ -238,8 +161,9 @@ isSigned=false;
 
 // SIMPAN
 function simpan(){
+
 if(!isSigned){
-alert("Tanda tangan wajib diisi!");
+alert("Tanda tangan wajib!");
 return;
 }
 
@@ -247,34 +171,19 @@ let data={
 nama:nama.value,
 rm:rm.value,
 wa:formatWA(wa.value),
-pemilik:pemilik.value,
-tgl:tgl.value,
 ttd:canvas.toDataURL(),
 status:"belum"
 };
 
 db.ref("pasien").push(data);
-alert("Data berhasil disimpan!");
+
+alert("Data tersimpan");
 location.reload();
 }
 
-// LOGIN
-function login(){
-let u=prompt("User ID");
-let p=prompt("Password");
-
-if(adminList[u] && adminList[u].p==p){
-userLogin=adminList[u].n;
-admin.classList.remove("hidden");
-load();
-}else{
-alert("Login gagal");
-}
-}
-
 // LOAD
-function load(){
 db.ref("pasien").on("value",snap=>{
+
 let belumHTML="", sudahHTML="";
 let no1=1,no2=1;
 
@@ -286,9 +195,9 @@ belumHTML+=`
 <tr>
 <td>${no1++}</td>
 <td>${x.nama}</td>
-<td>${x.wa}</td>
+<td>${x.rm}</td>
 <td>
-<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-3 py-1 text-sm">
+<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-2 py-1 text-sm">
 Kirim
 </button>
 </td>
@@ -298,15 +207,8 @@ sudahHTML+=`
 <tr>
 <td>${no2++}</td>
 <td>${x.nama}</td>
-<td>${x.wa}</td>
-<td>${x.tgl}</td>
+<td>${x.rm}</td>
 <td>${x.tglKirim}</td>
-<td>${x.user}</td>
-<td>
-<button onclick="printData('${x.nama}','${x.wa}','${x.tglKirim}')" class="bg-gray-600 text-white px-3 py-1 rounded-lg text-sm">
-Print
-</button>
-</td>
 </tr>`;
 }
 });
@@ -315,23 +217,19 @@ belum.innerHTML=belumHTML;
 sudah.innerHTML=sudahHTML;
 
 });
-}
 
-// WA
+// KIRIM WA
 function kirim(id,nama,wa){
-let pesan=`Halo Sahabat MP,
 
-Berikut hasil pemeriksaan ${nama} di Instalasi Radiologi.
+let pesan=`Halo,
 
-Download aplikasi:
-https://play.google.com/store/apps/details?id=com.mphg.mp_healthcare`;
+Berikut hasil pemeriksaan ${nama} di Instalasi Radiologi.`;
 
 window.open(`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`);
 
 db.ref("pasien/"+id).update({
 status:"sudah",
-tglKirim:new Date().toLocaleString(),
-user:userLogin
+tglKirim:new Date().toLocaleString()
 });
 }
 
@@ -341,57 +239,6 @@ if(n.startsWith("08")) return "62"+n.substring(1);
 return n;
 }
 
-// FILTER
-function filter(){
-let t=filterTgl.value;
-
-db.ref("pasien").once("value",snap=>{
-let html="";
-snap.forEach(d=>{
-let x=d.val();
-if(x.tgl==t && x.status=="sudah"){
-html+=`<tr>
-<td>${x.nama}</td>
-<td>${x.wa}</td>
-<td>${x.tglKirim}</td>
-</tr>`;
-}
-});
-sudah.innerHTML=html;
-});
-}
-
-// EXPORT
-function exportExcel(){
-db.ref("pasien").once("value",snap=>{
-let data="Nama\tWA\tTanggal\n";
-
-snap.forEach(d=>{
-let x=d.val();
-if(x.status=="sudah"){
-data+=`${x.nama}\t${x.wa}\t${x.tglKirim}\n`;
-}
-});
-
-let blob=new Blob([data]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="laporan.xls";
-a.click();
-});
-}
-
-// PRINT
-function printData(nama,wa,tgl){
-let w=window.open();
-w.document.write(`
-<h2>Bukti Kirim WA</h2>
-<p>Nama: ${nama}</p>
-<p>WA: ${wa}</p>
-<p>Tanggal: ${tgl}</p>
-`);
-w.print();
-}
 </script>
 
 </body>
