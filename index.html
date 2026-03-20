@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radiologi WA</title>
+<title>Radiologi Dashboard</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{
 background:linear-gradient(135deg,#f4f9fb,#eaf6fb);
 font-family:'Segoe UI';
 }
-
 .card{
 background:#fff;
 border-radius:18px;
 box-shadow:0 10px 30px rgba(0,0,0,0.08);
 }
-
 .input{
 width:100%;
 padding:12px;
@@ -26,12 +26,6 @@ margin-bottom:10px;
 border-radius:10px;
 border:1px solid #e5e7eb;
 }
-
-.input:focus{
-border-color:#4bb7db;
-box-shadow:0 0 0 2px rgba(75,183,219,0.2);
-}
-
 .btn{
 background:#4bb7db;
 color:#fff;
@@ -39,81 +33,49 @@ padding:12px;
 border-radius:10px;
 font-weight:600;
 }
-
-.btn:hover{
-background:#36a6cb;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th{
-background:#4bb7db;
-color:#fff;
-padding:10px;
-}
-
-td{
-padding:10px;
-border-bottom:1px solid #eee;
-}
 </style>
 </head>
 
 <body class="p-6">
 
 <h1 class="text-2xl font-bold text-center text-[#4bb7db] mb-6">
-📡 Validasi WA Radiologi
+📊 Dashboard Radiologi WA
 </h1>
 
 <!-- FORM -->
 <div class="card p-6 max-w-lg mx-auto">
-
 <input id="nama" placeholder="Nama Pasien" class="input">
 <input id="rm" placeholder="No RM" class="input">
-<input id="wa" placeholder="Nomor WA (08xxx)" class="input">
+<input id="wa" placeholder="Nomor WA" class="input">
 
-<p class="text-sm mt-2 mb-1">Tanda Tangan Persetujuan:</p>
+<p class="text-sm mb-1">Tanda Tangan:</p>
 <canvas id="ttd" width="320" height="120" class="border rounded"></canvas>
 
-<button onclick="clearTTD()" class="text-red-500 text-sm mt-2">
-Clear
-</button>
+<button onclick="clearTTD()" class="text-red-500 text-sm mt-2">Clear</button>
 
 <button onclick="simpan()" class="btn w-full mt-4">
 Simpan Permohonan
 </button>
-
 </div>
 
-<!-- DATA -->
+<!-- DASHBOARD -->
+<div class="card p-6 mt-10 max-w-4xl mx-auto">
+<h2 class="font-semibold mb-3">Grafik Kirim Harian</h2>
+<canvas id="chart"></canvas>
+</div>
+
+<!-- TABLE -->
 <div class="mt-10 max-w-4xl mx-auto">
 
-<h2 class="font-semibold text-[#4bb7db] mb-2">Keranjang Belum Kirim</h2>
-<table class="mb-6">
-<thead>
-<tr>
-<th>No</th>
-<th>Nama Pasien</th>
-<th>No RM</th>
-<th>Kirim WA</th>
-</tr>
-</thead>
+<h2 class="font-semibold text-[#4bb7db] mb-2">Belum Kirim</h2>
+<table class="w-full mb-6">
+<thead><tr><th>No</th><th>Nama</th><th>RM</th><th>Aksi</th></tr></thead>
 <tbody id="belum"></tbody>
 </table>
 
-<h2 class="font-semibold text-[#4bb7db] mb-2">Keranjang Terkirim</h2>
-<table>
-<thead>
-<tr>
-<th>No</th>
-<th>Nama Pasien</th>
-<th>No RM</th>
-<th>Tanggal Kirim</th>
-</tr>
-</thead>
+<h2 class="font-semibold text-[#4bb7db] mb-2">Terkirim</h2>
+<table class="w-full">
+<thead><tr><th>No</th><th>Nama</th><th>RM</th><th>Tanggal</th><th>Cetak</th></tr></thead>
 <tbody id="sudah"></tbody>
 </table>
 
@@ -124,7 +86,6 @@ Simpan Permohonan
 
 <script>
 
-// FIREBASE
 firebase.initializeApp({
 databaseURL:"https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
@@ -136,24 +97,18 @@ let ctx=canvas.getContext("2d");
 let drawing=false;
 let isSigned=false;
 
-ctx.lineWidth=2;
-ctx.lineCap="round";
-
 canvas.addEventListener("mousedown",(e)=>{
 drawing=true; isSigned=true;
 ctx.beginPath();
 ctx.moveTo(e.offsetX,e.offsetY);
 });
-
 canvas.addEventListener("mouseup",()=>drawing=false);
-
 canvas.addEventListener("mousemove",(e)=>{
 if(!drawing) return;
 ctx.lineTo(e.offsetX,e.offsetY);
 ctx.stroke();
 });
 
-// CLEAR
 function clearTTD(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 isSigned=false;
@@ -161,11 +116,7 @@ isSigned=false;
 
 // SIMPAN
 function simpan(){
-
-if(!isSigned){
-alert("Tanda tangan wajib!");
-return;
-}
+if(!isSigned) return alert("TTD wajib");
 
 let data={
 nama:nama.value,
@@ -176,16 +127,18 @@ status:"belum"
 };
 
 db.ref("pasien").push(data);
-
-alert("Data tersimpan");
+alert("Tersimpan");
 location.reload();
 }
 
 // LOAD
+let chart;
+
 db.ref("pasien").on("value",snap=>{
 
 let belumHTML="", sudahHTML="";
 let no1=1,no2=1;
+let statistik={};
 
 snap.forEach(d=>{
 let x=d.val();
@@ -196,25 +149,48 @@ belumHTML+=`
 <td>${no1++}</td>
 <td>${x.nama}</td>
 <td>${x.rm}</td>
-<td>
-<button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn px-2 py-1 text-sm">
-Kirim
-</button>
-</td>
+<td><button onclick="kirim('${d.key}','${x.nama}','${x.wa}')" class="btn text-sm px-2">Kirim</button></td>
 </tr>`;
 }else{
+
+// HITUNG DASHBOARD
+let tgl=x.tglKirim.split(",")[0];
+statistik[tgl]=(statistik[tgl]||0)+1;
+
 sudahHTML+=`
 <tr>
 <td>${no2++}</td>
 <td>${x.nama}</td>
 <td>${x.rm}</td>
 <td>${x.tglKirim}</td>
+<td>
+<button onclick="cetakPDF('${x.nama}','${x.rm}','${x.tglKirim}','${x.ttd}')" class="bg-gray-600 text-white px-2 rounded text-sm">
+PDF
+</button>
+</td>
 </tr>`;
 }
 });
 
 belum.innerHTML=belumHTML;
 sudah.innerHTML=sudahHTML;
+
+// CHART
+let labels=Object.keys(statistik);
+let data=Object.values(statistik);
+
+if(chart) chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:labels,
+datasets:[{
+label:"Jumlah Kirim",
+data:data
+}]
+}
+});
 
 });
 
@@ -237,6 +213,28 @@ tglKirim:new Date().toLocaleString()
 function formatWA(n){
 if(n.startsWith("08")) return "62"+n.substring(1);
 return n;
+}
+
+// PDF
+async function cetakPDF(nama,rm,tgl,ttd){
+
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+
+doc.setFontSize(14);
+doc.text("BUKTI PENGIRIMAN HASIL RADIOLOGI",20,20);
+
+doc.setFontSize(12);
+doc.text(`Nama Pasien : ${nama}`,20,40);
+doc.text(`No RM       : ${rm}`,20,50);
+doc.text(`Tanggal     : ${tgl}`,20,60);
+
+doc.text("Tanda Tangan Pasien:",20,80);
+
+// MASUKKAN TTD
+doc.addImage(ttd,"PNG",20,85,60,30);
+
+doc.save(`Bukti_${nama}.pdf`);
 }
 
 </script>
