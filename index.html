@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permintaan Radiologi</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
+
+<style>
+body{font-family:Arial;background:#f4f4f4;margin:0}
+
+/* 🔐 LOGIN MINI */
+.admin-bar{
+background:#2f8f8f;
+padding:10px;
+text-align:right;
+color:white;
+}
+.admin-bar input{
+padding:5px;
+width:120px;
+}
+.admin-bar button{
+padding:5px 10px;
+background:white;
+border:none;
+cursor:pointer;
+}
+
+/* FORM */
+.container{
+background:white;
+margin:20px;
+padding:20px;
+border-radius:10px;
+}
+table{width:100%}
+td{padding:8px}
+input{width:100%;padding:6px}
+
+button{
+background:#2f8f8f;
+color:white;
+padding:10px;
+border:none;
+cursor:pointer;
+}
+
+/* DASHBOARD */
+#dashboard{
+display:none;
+margin:20px;
+background:white;
+padding:20px;
+border-radius:10px;
+}
+
+.status-belum{color:red;font-weight:bold}
+.status-sudah{color:green;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 LOGIN MINI -->
+<div class="admin-bar">
+<input id="user" placeholder="User">
+<input id="pass" type="password" placeholder="Pass">
+<button onclick="login()">Login</button>
+</div>
+
+<!-- 🧾 FORM (TIDAK DIUBAH) -->
+<div class="container">
+
+<h3>I. IDENTITAS PASIEN</h3>
+
+<table>
+<tr>
+<td>Nama Pasien</td><td>:</td>
+<td><input id="nama"></td>
+
+<td>Nomor WhatsApp</td><td>:</td>
+<td><input id="wa"></td>
+</tr>
+
+<tr>
+<td>Nomor Rekam Medis</td><td>:</td>
+<td><input id="rm"></td>
+
+<td>Tanggal Lahir Pasien</td><td>:</td>
+<td><input type="date" id="tgl"></td>
+</tr>
+</table>
+
+<h3>II. PERNYATAAN PASIEN / KELUARGA</h3>
+
+<p>
+Saya yang bertanda tangan di bawah ini menyatakan bahwa nomor WhatsApp yang dicantumkan di atas adalah benar, aktif, dan dapat dihubungi, serta bersedia menerima hasil pemeriksaan radiologi melalui media WhatsApp.
+</p>
+
+<p>Saya memahami dan menyetujui bahwa:</p>
+
+<ol>
+<li>Hasil pemeriksaan radiologi akan dikirim dalam bentuk digital melalui WhatsApp.</li>
+<li>Pihak fasilitas pelayanan kesehatan telah menjaga kerahasiaan data sesuai ketentuan yang berlaku.</li>
+<li>Segala risiko yang timbul akibat kesalahan penulisan atau penggunaan nomor yang saya berikan menjadi tanggung jawab saya sepenuhnya.</li>
+</ol>
+
+<label>
+<input type="checkbox" id="setuju"> Saya menyetujui
+</label>
+
+<br><br>
+
+<button onclick="kirim()">KIRIM PERMOHONAN</button>
+
+</div>
+
+<!-- 📊 DASHBOARD ADMIN -->
+<div id="dashboard">
+
+<h3>📊 MONITORING ADMIN</h3>
+
+<table border="1" id="tabel">
+<tr>
+<th>Nama</th>
+<th>RM</th>
+<th>WA</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+</table>
+
+</div>
+
+<script>
+
+// 🔥 FIREBASE
+const firebaseConfig = {
+databaseURL: "https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 🔐 USER ADMIN
+const users = {
+"201708073":"123",
+"201007041":"123",
+"200603010":"123",
+"200903058":"123",
+"201706029":"123",
+"201911092":"123",
+"201506094":"123",
+"201501001":"123",
+"201011060":"123",
+"201307041":"123",
+"201807083":"123",
+"201907052":"123",
+"202101209":"123",
+"202207105":"123",
+"202303119":"123",
+"202310276":"123",
+"202403156":"123",
+"202411359":"123",
+"202502147":"123",
+"202507169":"123",
+"202508171":"123",
+"202508172":"123"
+};
+
+// LOGIN
+function login(){
+if(users[user.value]===pass.value){
+dashboard.style.display="block";
+loadData();
+alert("Login berhasil");
+}else{
+alert("Login gagal");
+}
+}
+
+// 🧾 KIRIM FORM
+function kirim(){
+
+if(!setuju.checked){
+alert("Harap setujui dulu!");
+return;
+}
+
+db.ref("permintaan").push({
+nama:nama.value,
+rm:rm.value,
+wa:wa.value,
+tgl:tgl.value,
+status:"Belum",
+time:new Date().toLocaleString()
+});
+
+alert("Berhasil dikirim");
+location.reload();
+}
+
+// 📊 LOAD DATA
+function loadData(){
+db.ref("permintaan").on("value",snap=>{
+
+tabel.innerHTML = `
+<tr>
+<th>Nama</th>
+<th>RM</th>
+<th>WA</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+`;
+
+snap.forEach(child=>{
+let d = child.val();
+let key = child.key;
+
+let row = tabel.insertRow();
+
+row.insertCell(0).innerText = d.nama;
+row.insertCell(1).innerText = d.rm;
+row.insertCell(2).innerText = d.wa;
+
+// STATUS
+let statusCell = row.insertCell(3);
+statusCell.innerText = d.status;
+statusCell.className = d.status=="Belum"?"status-belum":"status-sudah";
+
+// AKSI
+let aksi = row.insertCell(4);
+
+aksi.innerHTML = `
+<button onclick="kirimWA('${d.wa}','${d.nama}','${key}')">WA</button>
+`;
+});
+});
+}
+
+// 📲 KIRIM WA + AUTO UPDATE
+function kirimWA(wa,nama,key){
+let link = `https://wa.me/${wa}?text=Halo ${nama}, hasil radiologi Anda sudah tersedia.`;
+window.open(link);
+
+db.ref("permintaan/"+key).update({
+status:"Sudah"
+});
+}
+
+</script>
+
+</body>
+</html>
