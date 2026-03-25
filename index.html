@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Permintaan Radiologi</title>
 
-<!-- ✅ FIX FIREBASE (VERSI 8) -->
+<!-- FIREBASE FIX -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- ❗ hilangkan error favicon -->
 <link rel="icon" href="data:,">
 
 <style>
@@ -136,7 +135,7 @@ Saya yang bertanda tangan di bawah ini menyatakan bahwa nomor WhatsApp yang dica
 
 <script>
 
-// 🔐 USER ADMIN (HARUS DI ATAS)
+// 🔐 USER ADMIN
 const users = {
 "201708073":"123",
 "201007041":"123",
@@ -170,18 +169,75 @@ databaseURL: "https://kirim-wa-pasien-rad-default-rtdb.asia-southeast1.firebased
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+let isLogin = false;
+
 // LOGIN
 function login(){
 let u = document.getElementById("user").value;
 let p = document.getElementById("pass").value;
 
 if(users[u] === p){
+isLogin = true;
 document.getElementById("dashboard").style.display = "block";
-loadData();
+startRealtime();
 alert("Login berhasil");
 }else{
 alert("Login gagal");
 }
+}
+
+// REALTIME LISTENER
+function startRealtime(){
+
+db.ref("permintaan").off();
+
+db.ref("permintaan").on("value", function(snap){
+
+if(!isLogin) return;
+
+let tabel = document.getElementById("tabel");
+
+tabel.innerHTML = `
+<tr>
+<th>Nama</th>
+<th>RM</th>
+<th>WA</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+`;
+
+if(!snap.exists()){
+return;
+}
+
+snap.forEach(function(child){
+
+let d = child.val();
+let key = child.key;
+
+let row = tabel.insertRow();
+
+row.insertCell(0).innerText = d.nama || "-";
+row.insertCell(1).innerText = d.rm || "-";
+row.insertCell(2).innerText = d.wa || "-";
+
+let statusCell = row.insertCell(3);
+statusCell.innerText = d.status || "Belum";
+
+statusCell.className = d.status === "Sudah" ? "status-sudah" : "status-belum";
+
+let aksi = row.insertCell(4);
+
+aksi.innerHTML = `
+<button onclick="kirimWA('${d.wa}','${d.nama}','${key}')">WA</button>
+`;
+
+});
+
+console.log("Realtime aktif ✔");
+
+});
 }
 
 // KIRIM FORM
@@ -202,55 +258,13 @@ time: new Date().toLocaleString()
 });
 
 alert("Berhasil dikirim");
-location.reload();
-}
 
-// LOAD DATA REALTIME
-function loadData(){
-db.ref("permintaan").on("value", function(snap){
-
-let tabel = document.getElementById("tabel");
-
-tabel.innerHTML = `
-<tr>
-<th>Nama</th>
-<th>RM</th>
-<th>WA</th>
-<th>Status</th>
-<th>Aksi</th>
-</tr>
-`;
-
-snap.forEach(function(child){
-
-let d = child.val();
-let key = child.key;
-
-let row = tabel.insertRow();
-
-row.insertCell(0).innerText = d.nama;
-row.insertCell(1).innerText = d.rm;
-row.insertCell(2).innerText = d.wa;
-
-// STATUS
-let statusCell = row.insertCell(3);
-statusCell.innerText = d.status;
-
-if(d.status === "Belum"){
-statusCell.className = "status-belum";
-}else{
-statusCell.className = "status-sudah";
-}
-
-// AKSI
-let aksi = row.insertCell(4);
-
-aksi.innerHTML = `
-<button onclick="kirimWA('${d.wa}','${d.nama}','${key}')">WA</button>
-`;
-
-});
-});
+// reset form TANPA reload
+document.getElementById("nama").value = "";
+document.getElementById("rm").value = "";
+document.getElementById("wa").value = "";
+document.getElementById("tgl").value = "";
+document.getElementById("setuju").checked = false;
 }
 
 // KIRIM WA
@@ -259,7 +273,6 @@ function kirimWA(wa,nama,key){
 let link = `https://wa.me/${wa}?text=Halo ${nama}, hasil radiologi Anda sudah tersedia.`;
 window.open(link, "_blank");
 
-// AUTO UPDATE STATUS
 db.ref("permintaan/" + key).update({
 status: "Sudah"
 });
